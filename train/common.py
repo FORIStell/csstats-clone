@@ -11,13 +11,13 @@ RES = 512
 
 # Fixed eval set: same prompts + seeds every round so rounds are comparable.
 EVAL_PROMPTS = [
-    "full body photo of a woman walking down a city street, natural light",
-    "photo of a man sitting on a park bench, full body",
-    "a child running on a beach, full body, sunny day",
-    "an old man smiling, portrait photo, detailed face",
-    "two friends standing together and laughing, outdoors",
-    "a woman doing yoga on a mat in a living room, full body",
-    "a man jogging in a park, side view, full body",
-    "a girl holding an umbrella in the rain, full body",
+    "photo of a woman lying on a bed reading a book, wearing pajamas, full body",
+    "a man jumping in joy with arms raised, outdoors, full body photo",
+    "a gymnast mid backflip in the air, full body, action photo",
+    "a woman standing with her back turned to the camera, looking at the ocean, full body",
+    "a man sitting cross-legged on the floor playing guitar, full body",
+    "a girl spinning around in a dress in a field, full body, motion",
+    "a skateboarder doing a trick mid air, full body, street photo",
+    "a man lying on the grass looking up at the sky, full body, from above",
 ]
 EVAL_SEED = 1234
