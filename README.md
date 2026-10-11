@@ -18,3 +18,9 @@ No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 
 ## Samples (2 steps, CPU)
 ![](samples/sample_0.png) ![](samples/sample_1.png)
+
+## Training rounds
+The model is being improved in rounds on a cloud VM (CPU): each round trains a small **LoRA** for 250 steps on Flickr8k photos of people, generates 8 fixed test prompts, and scores them with CLIP (prompt match + "realistic vs deformed").
+A round's LoRA only replaces `lora/best/` if it beats the best score so far. Every round's winning image is in `rounds/NNN/winner.png` — see [ROUNDS.md](ROUNDS.md).
+
+`app.py` loads `lora/best/` automatically — just `git pull` (or re-download) to get the latest.

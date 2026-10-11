@@ -1,17 +1,23 @@
 """Lightweight local image generator (SD-Turbo) with a simple web UI."""
 import argparse
 import random
+from pathlib import Path
 
 import gradio as gr
 import torch
 from diffusers import AutoPipelineForText2Image
 
 MODEL_ID = "stabilityai/sd-turbo"
+LORA_DIR = Path(__file__).parent / "lora" / "best"
 
 
 def load_pipe(device):
     dtype = torch.float16 if device == "cuda" else torch.float32
     pipe = AutoPipelineForText2Image.from_pretrained(MODEL_ID, torch_dtype=dtype, variant="fp16" if device == "cuda" else None)
+    if (LORA_DIR / "pytorch_lora_weights.safetensors").exists():
+        print("Loading trained LoRA from", LORA_DIR)
+        pipe.load_lora_weights(str(LORA_DIR))
+        pipe.fuse_lora()
     if device == "cuda":
         # Keeps VRAM use low enough for 4GB cards.
         pipe.enable_model_cpu_offload()
