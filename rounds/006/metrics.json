@@ -1,0 +1,22 @@
+{
+  "steps": 250,
+  "lr": 5e-06,
+  "seed": 1212886529,
+  "train_reward": 0.29713155817985537,
+  "kl_weight": 1.0,
+  "minutes": 81.40254550774893,
+  "improved": false,
+  "best_round_after": 5,
+  "mean_score": 0.2949541099369526,
+  "scores": [
+    0.3198920488357544,
+    0.20564910769462585,
+    0.28150880336761475,
+    0.24502632021903992,
+    0.38867712020874023,
+    0.2607024610042572,
+    0.3355686664581299,
+    0.3226083517074585
+  ],
+  "winner_prompt": "a man sitting cross-legged on the floor playing guitar, full body"
+}
