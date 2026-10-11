@@ -136,7 +136,7 @@ def save_lora(unet):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--steps", type=int, default=250)
-    ap.add_argument("--lr", type=float, default=2e-5)
+    ap.add_argument("--lr", type=float, default=None, help="default: adaptive, stored in state.json")
     ap.add_argument("--kl", type=float, default=1.0)
     ap.add_argument("--batch", type=int, default=1)
     args = ap.parse_args()
@@ -150,6 +150,12 @@ def main():
         write_round(0, imgs, scores, {"note": "base model, no training"})
 
     n = state["round"] + 1
+    # Adaptive LR: halve after a failed round (fine steps near the optimum), never below 2.5e-6.
+    if args.lr is None:
+        lr = state.get("lr", 2e-5)
+        if state["history"] and not state["history"][-1]["improved"]:
+            lr = max(lr / 2, 2.5e-6)
+        args.lr = state["lr"] = lr
     seed = random.randrange(2**31)
     random.seed(seed)
     torch.manual_seed(seed)
