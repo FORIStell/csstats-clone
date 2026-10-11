@@ -18,7 +18,7 @@ from PIL import Image
 from safetensors.torch import load_file, save_file
 from transformers import AutoModel, AutoProcessor, CLIPModel, CLIPProcessor
 
-from common import EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
+from common import CACHE, EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
 
 LORA_CFG = dict(r=8, lora_alpha=8, init_lora_weights="gaussian", target_modules=["to_k", "to_q", "to_v", "to_out.0"])
 # Training reward: PickScore, a CLIP-H model fine-tuned on human preference votes (Pick-a-Pic).
@@ -59,7 +59,7 @@ def pick_reward(model, proc, images, prompts):
     return (img * t).sum(-1)
 
 
-def train(pipe, steps, lr, batch, kl_weight):
+def train(pipe, steps, lr, batch, kl_weight, round_n):
     """DRaFT-style reward fine-tuning: generate in 1 step, backprop the PickScore reward into the LoRA.
 
     Plain diffusion (MSE) training blurs SD-Turbo's few-step outputs; optimizing the generated image directly keeps
@@ -79,9 +79,18 @@ def train(pipe, steps, lr, batch, kl_weight):
     for p in params:
         p.requires_grad_(True)
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=1e-2)
-    t0, rewards = time.time(), []
+    t0, rewards, start = time.time(), [], 0
+    # Resume a round interrupted by a container restart.
+    ckpt_path = CACHE / "round_ckpt.pt"
+    if ckpt_path.exists():
+        ckpt = torch.load(ckpt_path)
+        if ckpt["round"] == round_n:
+            set_peft_model_state_dict(unet, ckpt["lora"])
+            opt.load_state_dict(ckpt["opt"])
+            start, rewards = ckpt["step"], ckpt["rewards"]
+            print(f"resumed round {round_n} at step {start}", flush=True)
     t = torch.full((batch,), 999)
-    for step in range(steps):
+    for step in range(start, steps):
         prompts = [random_train_prompt(rng) for _ in range(batch)]
         with torch.no_grad():
             ids = tok(prompts, padding="max_length", max_length=tok.model_max_length, truncation=True, return_tensors="pt").input_ids
@@ -105,9 +114,12 @@ def train(pipe, steps, lr, batch, kl_weight):
         rewards.append(reward.item())
         if (step + 1) % 25 == 0:
             el = time.time() - t0
-            print(f"step {step+1}/{steps} reward {sum(rewards[-25:])/25:.4f} kl {kl.item():.5f} ({el/(step+1):.1f}s/step)", flush=True)
+            print(f"step {step+1}/{steps} reward {sum(rewards[-25:])/25:.4f} kl {kl.item():.5f} ({el/(step+1-start):.1f}s/step)", flush=True)
+            CACHE.mkdir(parents=True, exist_ok=True)
+            torch.save({"round": round_n, "step": step + 1, "rewards": rewards, "opt": opt.state_dict(),
+                        "lora": get_peft_model_state_dict(unet)}, ckpt_path)
     unet.eval()
-    return sum(rewards) / len(rewards)
+    return sum(rewards) / len(rewards)  # checkpoint is removed by main() once the round is recorded
 
 
 @torch.no_grad()
@@ -162,7 +174,7 @@ def main():
     torch.manual_seed(seed)
     pipe = build_pipe(with_lora=True)  # starts from the current best LoRA
     t0 = time.time()
-    reward = train(pipe, args.steps, args.lr, args.batch, args.kl)
+    reward = train(pipe, args.steps, args.lr, args.batch, args.kl, n)
     imgs, scores = evaluate(pipe)
     mean = sum(scores) / len(scores)
     improved = mean > state["best_score"]
@@ -176,6 +188,7 @@ def main():
     state["history"].append({"round": n, "score": mean, "improved": improved})
     STATE_FILE.write_text(json.dumps(state, indent=2))
     write_leaderboard(state)
+    (CACHE / "round_ckpt.pt").unlink(missing_ok=True)
     print(json.dumps(info), "score", mean, flush=True)
 
 
