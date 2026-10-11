@@ -7,13 +7,12 @@ flock -n 9 || { echo "round already running"; exit 0; }
 # Fresh container: install deps if missing.
 python3 -c "import torch, diffusers, peft, transformers" 2>/dev/null || {
   pip install -q torch --index-url https://download.pytorch.org/whl/cpu
-  pip install -q -r ../requirements.txt peft pandas
+  pip install -q -r ../requirements.txt peft
 }
-python3 prepare_data.py
 python3 round.py "$@"
 cd ..
 N=$(python3 -c "import json;print(json.load(open('train/state.json'))['round'])")
-git add -A rounds lora train/state.json ROUNDS.md
+git add -A rounds train/state.json ROUNDS.md; [ -d lora ] && git add -A lora
 git commit -qm "Training round $N
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>

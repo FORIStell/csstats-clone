@@ -21,3 +21,19 @@ EVAL_PROMPTS = [
     "a man lying on the grass looking up at the sky, full body, from above",
 ]
 EVAL_SEED = 1234
+
+# Training prompts are generated from templates (never the eval prompts) so the score isn't overfit.
+SUBJECTS = ["a man", "a woman", "a young man", "a young woman", "an old man", "an old woman", "a boy", "a girl",
+            "a dancer", "an athlete", "two friends", "a couple"]
+ACTIONS = ["jumping in the air", "running", "doing a cartwheel", "sitting on a chair", "lying on a sofa", "stretching",
+           "walking away from the camera", "kneeling on the ground", "climbing a wall", "dancing", "waving",
+           "doing a handstand", "sitting on stairs", "lying on a bed", "riding a bicycle", "kicking a ball",
+           "leaning against a wall", "crouching down", "throwing a frisbee", "hugging"]
+SETTINGS = ["in a park", "on a beach", "in a bedroom", "on a city street", "in a gym", "in a forest", "in a kitchen",
+            "on a rooftop", "in a field of flowers", "in a living room", "at sunset", "in the snow"]
+SHOTS = ["full body photo", "full body, wide shot", "photo, full body, from the side", "photo from behind, full body",
+         "full body, low angle photo"]
+
+
+def random_train_prompt(rng):
+    return f"{rng.choice(SUBJECTS)} {rng.choice(ACTIONS)} {rng.choice(SETTINGS)}, {rng.choice(SHOTS)}"

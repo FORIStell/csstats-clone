@@ -10,7 +10,7 @@ import time
 
 import torch
 import torch.nn.functional as F
-from diffusers import AutoPipelineForText2Image, DDPMScheduler, StableDiffusionPipeline
+from diffusers import AutoencoderTiny, AutoPipelineForText2Image, DDPMScheduler, StableDiffusionPipeline
 from diffusers.utils import convert_state_dict_to_diffusers
 from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict, set_peft_model_state_dict
@@ -18,9 +18,11 @@ from PIL import Image
 from safetensors.torch import load_file, save_file
 from transformers import CLIPModel, CLIPProcessor
 
-from common import CACHE, EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE
+from common import EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
 
 LORA_CFG = dict(r=8, lora_alpha=8, init_lora_weights="gaussian", target_modules=["to_k", "to_q", "to_v", "to_out.0"])
+TRAIN_CLIP = "openai/clip-vit-base-patch32"
+EVAL_CLIP = "openai/clip-vit-large-patch14"  # different scorer for judging, to catch reward hacking
 GOOD = "a high quality sharp photo of a person with natural anatomy and a realistic face"
 BAD = "a blurry distorted photo of a person with a deformed body, extra limbs and a messed up face"
 
@@ -42,48 +44,75 @@ def build_pipe(with_lora):
     return pipe
 
 
-def train(pipe, steps, lr, batch):
-    data = torch.load(CACHE / "latents.pt")
-    latents, captions = data["latents"], data["captions"]
+def clip_reward(clip, proc, images, prompts):
+    """Differentiable CLIP reward on [0,1] image tensors: prompt match + realistic-vs-deformed contrast."""
+    mean = torch.tensor(proc.image_processor.image_mean).view(1, 3, 1, 1)
+    std = torch.tensor(proc.image_processor.image_std).view(1, 3, 1, 1)
+    px = (F.interpolate(images, size=224, mode="bicubic", antialias=True) - mean) / std
+    img = F.normalize(clip.visual_projection(clip.vision_model(pixel_values=px).pooler_output), dim=-1)
+    txt = proc.tokenizer(list(prompts) + [GOOD, BAD], padding=True, return_tensors="pt")
+    with torch.no_grad():
+        t = F.normalize(clip.text_projection(clip.text_model(**txt).pooler_output), dim=-1)
+    n = len(prompts)
+    prompt_sim = (img * t[:n]).sum(-1)
+    return prompt_sim + 2 * (img @ t[n] - img @ t[n + 1])
+
+
+def train(pipe, steps, lr, batch, kl_weight):
+    """DRaFT-style reward fine-tuning: generate in 1 step, backprop the CLIP reward into the LoRA.
+
+    Plain diffusion (MSE) training blurs SD-Turbo's few-step outputs; optimizing the generated image directly keeps
+    it sharp. kl_weight keeps the LoRA's prediction close to the base model's to limit reward hacking.
+    """
+    rng = random.Random()
     sched = DDPMScheduler.from_pretrained(MODEL_ID, subfolder="scheduler")
+    abar = sched.alphas_cumprod[999]
+    taesd = AutoencoderTiny.from_pretrained("madebyollin/taesd").eval().requires_grad_(False)
+    clip = CLIPModel.from_pretrained(TRAIN_CLIP).eval().requires_grad_(False)
+    proc = CLIPProcessor.from_pretrained(TRAIN_CLIP)
     unet, te, tok = pipe.unet, pipe.text_encoder, pipe.tokenizer
-    unet.train()
     unet.enable_gradient_checkpointing()
-    params = [p for n, p in unet.named_parameters() if "lora" in n]
     for p in unet.parameters():
         p.requires_grad_(False)
+    params = [p for n, p in unet.named_parameters() if "lora" in n]
     for p in params:
         p.requires_grad_(True)
     opt = torch.optim.AdamW(params, lr=lr, weight_decay=1e-2)
-    t0, losses = time.time(), []
+    t0, rewards = time.time(), []
+    t = torch.full((batch,), 999)
     for step in range(steps):
-        idx = random.sample(range(len(latents)), batch)
-        x0 = latents[idx].float()
-        caps = [random.choice(captions[i]) for i in idx]
+        prompts = [random_train_prompt(rng) for _ in range(batch)]
         with torch.no_grad():
-            ids = tok(caps, padding="max_length", max_length=tok.model_max_length, truncation=True, return_tensors="pt").input_ids
+            ids = tok(prompts, padding="max_length", max_length=tok.model_max_length, truncation=True, return_tensors="pt").input_ids
             enc = te(ids)[0]
-        noise = torch.randn_like(x0)
-        # Bias toward high-noise timesteps: Turbo generates in 1-4 steps starting from t=999.
-        t = (torch.rand(batch).pow(0.5) * sched.config.num_train_timesteps).long().clamp(max=999)
-        xt = sched.add_noise(x0, noise, t)
-        loss = F.mse_loss(unet(xt, t, enc).sample, noise)
+        xt = torch.randn(batch, 4, 64, 64)
+        with torch.no_grad():
+            unet.disable_adapters()
+            eps_base = unet(xt, t, enc).sample
+            unet.enable_adapters()
+        unet.train()
+        eps = unet(xt, t, enc).sample
+        x0 = (xt - (1 - abar).sqrt() * eps) / abar.sqrt()
+        img = (taesd.decode(x0 / pipe.vae.config.scaling_factor).sample.clamp(-1, 1) + 1) / 2
+        reward = clip_reward(clip, proc, img, prompts).mean()
+        kl = F.mse_loss(eps, eps_base)
+        loss = -reward + kl_weight * kl
         loss.backward()
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         opt.zero_grad()
-        losses.append(loss.item())
+        rewards.append(reward.item())
         if (step + 1) % 25 == 0:
             el = time.time() - t0
-            print(f"step {step+1}/{steps} loss {sum(losses[-25:])/25:.4f} ({el/(step+1):.1f}s/step)", flush=True)
+            print(f"step {step+1}/{steps} reward {sum(rewards[-25:])/25:.4f} kl {kl.item():.5f} ({el/(step+1):.1f}s/step)", flush=True)
     unet.eval()
-    return sum(losses) / len(losses)
+    return sum(rewards) / len(rewards)
 
 
 @torch.no_grad()
 def evaluate(pipe):
-    clip = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").eval()
-    proc = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+    clip = CLIPModel.from_pretrained(EVAL_CLIP).eval()
+    proc = CLIPProcessor.from_pretrained(EVAL_CLIP)
     images, scores = [], []
     for i, prompt in enumerate(EVAL_PROMPTS):
         img = pipe(prompt=prompt, num_inference_steps=2, guidance_scale=0.0,
@@ -107,7 +136,8 @@ def save_lora(unet):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--steps", type=int, default=250)
-    ap.add_argument("--lr", type=float, default=5e-5)
+    ap.add_argument("--lr", type=float, default=2e-5)
+    ap.add_argument("--kl", type=float, default=1.0)
     ap.add_argument("--batch", type=int, default=1)
     args = ap.parse_args()
 
@@ -125,14 +155,14 @@ def main():
     torch.manual_seed(seed)
     pipe = build_pipe(with_lora=True)  # starts from the current best LoRA
     t0 = time.time()
-    loss = train(pipe, args.steps, args.lr, args.batch)
+    reward = train(pipe, args.steps, args.lr, args.batch, args.kl)
     imgs, scores = evaluate(pipe)
     mean = sum(scores) / len(scores)
     improved = mean > state["best_score"]
     if improved:
         save_lora(pipe.unet)
         state["best_score"], state["best_round"] = mean, n
-    info = {"steps": args.steps, "lr": args.lr, "seed": seed, "train_loss": loss, "minutes": (time.time() - t0) / 60,
+    info = {"steps": args.steps, "lr": args.lr, "seed": seed, "train_reward": reward, "kl_weight": args.kl, "minutes": (time.time() - t0) / 60,
             "improved": improved, "best_round_after": state["best_round"]}
     write_round(n, imgs, scores, info)
     state["round"] = n
