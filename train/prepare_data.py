@@ -22,7 +22,7 @@ def center_crop(img):
     return img.resize((RES, RES), Image.BICUBIC)
 
 
-def main(limit=2000):
+def main(limit=600):
     out = CACHE / "latents.pt"
     if out.exists():
         print("cache exists:", out)
