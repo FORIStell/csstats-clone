@@ -1,0 +1,15 @@
+{
+  "note": "base model, no training",
+  "mean_score": 0.2797658424824476,
+  "scores": [
+    0.3170131742954254,
+    0.19743700325489044,
+    0.2615181505680084,
+    0.2571973502635956,
+    0.36498379707336426,
+    0.29301953315734863,
+    0.32091912627220154,
+    0.2260386049747467
+  ],
+  "winner_prompt": "a man sitting cross-legged on the floor playing guitar, full body"
+}
