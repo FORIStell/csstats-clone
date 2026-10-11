@@ -4,6 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 exec 9>/tmp/imggen-round.lock
 flock -n 9 || { echo "round already running"; exit 0; }
+# Fresh container: install deps if missing.
+python3 -c "import torch, diffusers, peft, transformers" 2>/dev/null || {
+  pip install -q torch --index-url https://download.pytorch.org/whl/cpu
+  pip install -q -r ../requirements.txt peft pandas
+}
 python3 prepare_data.py
 python3 round.py "$@"
 cd ..

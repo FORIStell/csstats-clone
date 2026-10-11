@@ -1,0 +1,15 @@
+{
+  "note": "base model, no training",
+  "mean_score": 0.32128533720970154,
+  "scores": [
+    0.3821820914745331,
+    0.267840176820755,
+    0.29715731739997864,
+    0.29829227924346924,
+    0.3800613284111023,
+    0.34819597005844116,
+    0.273875892162323,
+    0.3226776421070099
+  ],
+  "winner_prompt": "photo of a woman lying on a bed reading a book, wearing pajamas, full body"
+}
