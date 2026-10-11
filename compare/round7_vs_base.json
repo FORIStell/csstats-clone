@@ -1,0 +1,33 @@
+{
+  "compared": "base vs round 7 (blind, random sides)",
+  "pairs": {
+    "1": {
+      "prompt": "a woman sitting on a kitchen counter laughing, full body photo",
+      "A": "base",
+      "B": "trained",
+      "vote": "A",
+      "winner": "base"
+    },
+    "2": {
+      "prompt": "a man doing a push-up on a beach, side view, full body",
+      "A": "trained",
+      "B": "base",
+      "vote": "A",
+      "winner": "trained"
+    },
+    "3": {
+      "prompt": "a girl hanging upside down from a tree branch, full body",
+      "A": "base",
+      "B": "trained",
+      "vote": "Both bad",
+      "winner": "Both bad"
+    },
+    "4": {
+      "prompt": "a couple dancing in a ballroom, full body, motion",
+      "A": "trained",
+      "B": "base",
+      "vote": "B",
+      "winner": "base"
+    }
+  }
+}

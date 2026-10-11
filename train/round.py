@@ -16,12 +16,15 @@ from peft import LoraConfig
 from peft.utils import get_peft_model_state_dict, set_peft_model_state_dict
 from PIL import Image
 from safetensors.torch import load_file, save_file
-from transformers import CLIPModel, CLIPProcessor
+from transformers import AutoModel, AutoProcessor, CLIPModel, CLIPProcessor
 
 from common import EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
 
 LORA_CFG = dict(r=8, lora_alpha=8, init_lora_weights="gaussian", target_modules=["to_k", "to_q", "to_v", "to_out.0"])
-TRAIN_CLIP = "openai/clip-vit-base-patch32"
+# Training reward: PickScore, a CLIP-H model fine-tuned on human preference votes (Pick-a-Pic).
+# Plain CLIP rewards drifted toward washed-out images that a person rated worse in a blind test.
+REWARD_MODEL = "yuvalkirstain/PickScore_v1"
+REWARD_PROC = "laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
 EVAL_CLIP = "openai/clip-vit-large-patch14"  # different scorer for judging, to catch reward hacking
 GOOD = "a high quality sharp photo of a person with natural anatomy and a realistic face"
 BAD = "a blurry distorted photo of a person with a deformed body, extra limbs and a messed up face"
@@ -44,22 +47,20 @@ def build_pipe(with_lora):
     return pipe
 
 
-def clip_reward(clip, proc, images, prompts):
-    """Differentiable CLIP reward on [0,1] image tensors: prompt match + realistic-vs-deformed contrast."""
+def pick_reward(model, proc, images, prompts):
+    """Differentiable PickScore on [0,1] image tensors: cosine sim between image and prompt embeddings."""
     mean = torch.tensor(proc.image_processor.image_mean).view(1, 3, 1, 1)
     std = torch.tensor(proc.image_processor.image_std).view(1, 3, 1, 1)
     px = (F.interpolate(images, size=224, mode="bicubic", antialias=True) - mean) / std
-    img = F.normalize(clip.visual_projection(clip.vision_model(pixel_values=px).pooler_output), dim=-1)
-    txt = proc.tokenizer(list(prompts) + [GOOD, BAD], padding=True, return_tensors="pt")
+    img = F.normalize(model.visual_projection(model.vision_model(pixel_values=px).pooler_output), dim=-1)
+    txt = proc.tokenizer(list(prompts), padding=True, truncation=True, max_length=77, return_tensors="pt")
     with torch.no_grad():
-        t = F.normalize(clip.text_projection(clip.text_model(**txt).pooler_output), dim=-1)
-    n = len(prompts)
-    prompt_sim = (img * t[:n]).sum(-1)
-    return prompt_sim + 2 * (img @ t[n] - img @ t[n + 1])
+        t = F.normalize(model.text_projection(model.text_model(**txt).pooler_output), dim=-1)
+    return (img * t).sum(-1)
 
 
 def train(pipe, steps, lr, batch, kl_weight):
-    """DRaFT-style reward fine-tuning: generate in 1 step, backprop the CLIP reward into the LoRA.
+    """DRaFT-style reward fine-tuning: generate in 1 step, backprop the PickScore reward into the LoRA.
 
     Plain diffusion (MSE) training blurs SD-Turbo's few-step outputs; optimizing the generated image directly keeps
     it sharp. kl_weight keeps the LoRA's prediction close to the base model's to limit reward hacking.
@@ -68,8 +69,8 @@ def train(pipe, steps, lr, batch, kl_weight):
     sched = DDPMScheduler.from_pretrained(MODEL_ID, subfolder="scheduler")
     abar = sched.alphas_cumprod[999]
     taesd = AutoencoderTiny.from_pretrained("madebyollin/taesd").eval().requires_grad_(False)
-    clip = CLIPModel.from_pretrained(TRAIN_CLIP).eval().requires_grad_(False)
-    proc = CLIPProcessor.from_pretrained(TRAIN_CLIP)
+    reward_model = AutoModel.from_pretrained(REWARD_MODEL).eval().requires_grad_(False)
+    reward_proc = AutoProcessor.from_pretrained(REWARD_PROC)
     unet, te, tok = pipe.unet, pipe.text_encoder, pipe.tokenizer
     unet.enable_gradient_checkpointing()
     for p in unet.parameters():
@@ -94,7 +95,7 @@ def train(pipe, steps, lr, batch, kl_weight):
         eps = unet(xt, t, enc).sample
         x0 = (xt - (1 - abar).sqrt() * eps) / abar.sqrt()
         img = (taesd.decode(x0 / pipe.vae.config.scaling_factor).sample.clamp(-1, 1) + 1) / 2
-        reward = clip_reward(clip, proc, img, prompts).mean()
+        reward = pick_reward(reward_model, reward_proc, img, prompts).mean()
         kl = F.mse_loss(eps, eps_base)
         loss = -reward + kl_weight * kl
         loss.backward()
