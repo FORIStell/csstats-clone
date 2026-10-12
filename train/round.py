@@ -139,11 +139,11 @@ def evaluate(pipe):
     return images, scores
 
 
-def save_lora(unet):
-    LORA_DIR.mkdir(parents=True, exist_ok=True)
+def save_lora(unet, out_dir=LORA_DIR):
+    out_dir.mkdir(parents=True, exist_ok=True)
     sd = get_peft_model_state_dict(unet)
-    save_file({k: v.contiguous() for k, v in sd.items()}, LORA_DIR / "peft_state.safetensors")
-    StableDiffusionPipeline.save_lora_weights(LORA_DIR, unet_lora_layers=convert_state_dict_to_diffusers(sd))
+    save_file({k: v.contiguous() for k, v in sd.items()}, out_dir / "peft_state.safetensors")
+    StableDiffusionPipeline.save_lora_weights(out_dir, unet_lora_layers=convert_state_dict_to_diffusers(sd))
 
 
 def main():
@@ -178,6 +178,7 @@ def main():
     imgs, scores = evaluate(pipe)
     mean = sum(scores) / len(scores)
     improved = mean > state["best_score"]
+    save_lora(pipe.unet, CACHE / "candidates" / f"{n:03d}")  # local only, for human A/B tests
     if improved:
         save_lora(pipe.unet)
         state["best_score"], state["best_round"] = mean, n
