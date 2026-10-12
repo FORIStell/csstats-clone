@@ -1,6 +1,6 @@
 {
-  "round": 12,
-  "best_score": 0.302545677870512,
+  "round": 13,
+  "best_score": 0.2690597362816334,
   "best_round": 7,
   "history": [
     {
@@ -62,7 +62,18 @@
       "round": 12,
       "score": 0.2980991415679455,
       "improved": false
+    },
+    {
+      "round": "7 (re-scored, eval v2)",
+      "score": 0.2690597362816334,
+      "improved": true
+    },
+    {
+      "round": 13,
+      "score": 0.2634351495653391,
+      "improved": false
     }
   ],
-  "lr": 2.5e-06
+  "lr": 1e-05,
+  "eval_version": 2
 }

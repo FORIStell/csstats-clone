@@ -1,0 +1,22 @@
+{
+  "steps": 250,
+  "lr": 1e-05,
+  "seed": 98547700,
+  "train_reward": 0.20218634116649628,
+  "kl_weight": 1.0,
+  "minutes": 102.86534547011057,
+  "improved": false,
+  "best_round_after": 7,
+  "mean_score": 0.2634351495653391,
+  "scores": [
+    0.22710491716861725,
+    0.20287105441093445,
+    0.27522894740104675,
+    0.2878372371196747,
+    0.24069112539291382,
+    0.2578910291194916,
+    0.3283384442329407,
+    0.2875184416770935
+  ],
+  "winner_prompt": "a skateboarder doing a trick mid air, full body, street photo"
+}

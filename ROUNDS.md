@@ -1,9 +1,11 @@
 # Training rounds
 
-Current best: **round 7** (score 0.3025)
+Current best: **round 7** (score 0.2691)
 
 | Round | Score | Kept? | Winner |
 |---|---|---|---|
+| 13 | 0.2634 | no | ![](rounds/013/winner.png) |
+| 7 (re-scored, eval v2) | 0.2691 | — | new test prompts from here up |
 | 12 | 0.2981 | no | ![](rounds/012/winner.png) |
 | 11 | 0.2971 | no | ![](rounds/011/winner.png) |
 | 10 | 0.2978 | no | ![](rounds/010/winner.png) |
