@@ -168,6 +168,7 @@ def main():
         imgs, scores = evaluate(build_pipe(with_lora=state["best_round"] != 0))
         state["best_score"] = sum(scores) / len(scores)
         state["eval_version"] = EVAL_VERSION
+        state["lr"] = 1e-5  # new training focus: reset the adaptive LR
         state["history"].append({"round": f"{state['best_round']} (re-scored, eval v{EVAL_VERSION})",
                                  "score": state["best_score"], "improved": True})
 
