@@ -1,0 +1,29 @@
+{
+  "compared": "round 7 (best) vs round 11 (PickScore), blind, random sides",
+  "pairs": {
+    "1": {
+      "prompt": "a woman sitting on a swing in a park, full body photo",
+      "A": "round 7 (best)",
+      "B": "round 11 (PickScore)",
+      "vote": "Same"
+    },
+    "2": {
+      "prompt": "a man climbing a ladder, full body, side view",
+      "A": "round 11 (PickScore)",
+      "B": "round 7 (best)",
+      "vote": "Same"
+    },
+    "3": {
+      "prompt": "a boy doing a cartwheel on the grass, full body",
+      "A": "round 11 (PickScore)",
+      "B": "round 7 (best)",
+      "vote": "Both bad"
+    },
+    "4": {
+      "prompt": "a woman stretching her arms up after waking up in bed, full body",
+      "A": "round 11 (PickScore)",
+      "B": "round 7 (best)",
+      "vote": "Same"
+    }
+  }
+}
