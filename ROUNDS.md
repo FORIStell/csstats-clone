@@ -1,9 +1,10 @@
 # Training rounds
 
-Current best: **round 20** (score 0.2697)
+Current best: **round 21** (score 0.2716)
 
 | Round | Score | Kept? | Winner |
 |---|---|---|---|
+| 21 | 0.2716 | yes | ![](rounds/021/winner.png) |
 | 20 | 0.2697 | yes | ![](rounds/020/winner.png) |
 | 19 | 0.2687 | no | ![](rounds/019/winner.png) |
 | 18 | 0.2672 | no | ![](rounds/018/winner.png) |
