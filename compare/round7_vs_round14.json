@@ -1,0 +1,33 @@
+{
+  "compared": "round 7 (best) vs round 14 (hard poses), blind, random sides",
+  "pairs": {
+    "1": {
+      "prompt": "a woman doing a cartwheel in a park, full body",
+      "A": "round 14 (hard poses)",
+      "B": "round 7 (best)",
+      "vote": "B",
+      "winner": "round 7 (best)"
+    },
+    "2": {
+      "prompt": "a man doing a handstand on a rooftop, full body",
+      "A": "round 7 (best)",
+      "B": "round 14 (hard poses)",
+      "vote": "A",
+      "winner": "round 7 (best)"
+    },
+    "3": {
+      "prompt": "a girl doing a split on a gym floor, full body",
+      "A": "round 14 (hard poses)",
+      "B": "round 7 (best)",
+      "vote": "A",
+      "winner": "round 14 (hard poses)"
+    },
+    "4": {
+      "prompt": "a boy jumping off a diving board mid air, full body",
+      "A": "round 7 (best)",
+      "B": "round 14 (hard poses)",
+      "vote": "B",
+      "winner": "round 14 (hard poses)"
+    }
+  }
+}
