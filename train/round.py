@@ -18,7 +18,7 @@ from PIL import Image
 from safetensors.torch import load_file, save_file
 from transformers import AutoModel, AutoProcessor, CLIPModel, CLIPProcessor
 
-from common import CACHE, EVAL_PROMPTS, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
+from common import CACHE, EVAL_PROMPTS, EVAL_VERSION, EVAL_SEED, LORA_DIR, MODEL_ID, ROUNDS_DIR, STATE_FILE, random_train_prompt
 
 LORA_CFG = dict(r=8, lora_alpha=8, init_lora_weights="gaussian", target_modules=["to_k", "to_q", "to_v", "to_out.0"])
 # Training reward: PickScore, a CLIP-H model fine-tuned on human preference votes (Pick-a-Pic).
@@ -161,6 +161,15 @@ def main():
         state["best_score"] = sum(scores) / len(scores)
         state["best_round"] = 0
         write_round(0, imgs, scores, {"note": "base model, no training"})
+        state["eval_version"] = EVAL_VERSION
+    elif state.get("eval_version", 1) != EVAL_VERSION:
+        # Test prompts changed: re-score the current best so later rounds are compared fairly.
+        print(f"Re-scoring best (round {state['best_round']}) on eval set v{EVAL_VERSION}...", flush=True)
+        imgs, scores = evaluate(build_pipe(with_lora=state["best_round"] != 0))
+        state["best_score"] = sum(scores) / len(scores)
+        state["eval_version"] = EVAL_VERSION
+        state["history"].append({"round": f"{state['best_round']} (re-scored, eval v{EVAL_VERSION})",
+                                 "score": state["best_score"], "improved": True})
 
     n = state["round"] + 1
     # Adaptive LR: halve after a failed round (fine steps near the optimum), never below 2.5e-6.
@@ -210,6 +219,9 @@ def write_leaderboard(state):
     lines = ["# Training rounds", "", f"Current best: **round {state['best_round']}** (score {state['best_score']:.4f})", "",
              "| Round | Score | Kept? | Winner |", "|---|---|---|---|"]
     for h in reversed(state["history"]):
+        if isinstance(h["round"], str):  # eval-set change marker
+            lines.append(f"| {h['round']} | {h['score']:.4f} | — | new test prompts from here up |")
+            continue
         lines.append(f"| {h['round']} | {h['score']:.4f} | {'yes' if h['improved'] else 'no'} | ![](rounds/{h['round']:03d}/winner.png) |")
     lines.append("| 0 (base) | — | — | ![](rounds/000/winner.png) |")
     (ROUNDS_DIR.parent / "ROUNDS.md").write_text("\n".join(lines) + "\n")
