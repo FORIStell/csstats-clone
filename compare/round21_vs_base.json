@@ -1,0 +1,33 @@
+{
+  "compared": "round 21 (best) vs base, blind, random sides",
+  "pairs": {
+    "1": {
+      "prompt": "a man doing a backflip on a beach, full body, action photo",
+      "A": "base",
+      "B": "round 21",
+      "vote": "Both bad",
+      "winner": "Both bad"
+    },
+    "2": {
+      "prompt": "a woman lying on her back on the grass with her legs up a tree, full body",
+      "A": "base",
+      "B": "round 21",
+      "vote": "A",
+      "winner": "base"
+    },
+    "3": {
+      "prompt": "a girl doing a bridge pose on a yoga mat, full body, side view",
+      "A": "round 21",
+      "B": "base",
+      "vote": "A",
+      "winner": "round 21"
+    },
+    "4": {
+      "prompt": "a boy hanging upside down from monkey bars, full body",
+      "A": "round 21",
+      "B": "base",
+      "vote": "Both bad",
+      "winner": "Both bad"
+    }
+  }
+}
