@@ -3,3 +3,4 @@ transformers
 accelerate
 safetensors
 gradio>=4
+controlnet_aux

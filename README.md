@@ -1,13 +1,16 @@
 # Local Image Gen
 
-Lightweight text-to-image generator that runs on your PC using **SD-Turbo** (~2.5GB, 512px, 1–4 steps).
+Lightweight text-to-image generator that runs on your PC using **SD-Turbo** (~2.5GB, 512px, 1–4 steps),
+with **pose control** (OpenPose ControlNet) for hard poses like handstands, cartwheels, flips and lying down.
 Tuned for low-VRAM GPUs (4GB works via CPU offload).
 
 ## Windows setup
 1. Install [Python 3.11](https://www.python.org/downloads/) — tick **"Add to PATH"**.
 2. Download this repo (Code → Download ZIP) and extract it.
 3. Double-click `install.bat` (one time, ~5GB download incl. PyTorch).
-4. Double-click `run.bat` — a browser tab opens. First launch downloads the model (~2.5GB).
+4. Double-click `run.bat` — a browser tab opens. First launch downloads the models (~4GB).
+
+Already installed an older version? Re-run `install.bat` once (pose control needs new packages).
 
 No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 
@@ -16,11 +19,25 @@ No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 - Describe the person, pose, clothing and setting: `full body photo of a man jogging on a beach, sunset`.
 - Reuse a seed to tweak a prompt while keeping the same composition.
 
+## Pose control
+Plain text prompts often break bodies in unusual poses. Tick **Use pose control** and pick a source:
+- **Preset pose** — Handstand, Cartwheel, Backflip, Split, Lying on back, Sitting cross-legged, Jumping, Standing.
+- **Copy pose from my photo** — upload any photo of a person; their pose is detected and reused (first use downloads the detector, ~200MB).
+- **My skeleton image** — upload your own OpenPose stick figure.
+
+**Pose strength** 1.0 is a good default; lower it if images look stiff, raise it if the pose isn't followed.
+
+![](samples/pose_presets.png)
+*Top: 2 steps, bottom: 4 steps — handstand, cartwheel, backflip, split.*
+
+![](samples/pose_modes.png)
+*Text only · handstand preset · pose detected from a photo · same pose as an astronaut · lying-down preset.*
+
 ## Samples (2 steps, CPU)
 ![](samples/sample_0.png) ![](samples/sample_1.png)
 
-## Training rounds
-The model is being improved in rounds on a cloud VM (CPU): each round trains a small **LoRA** for 250 steps on Flickr8k photos of people, generates 8 fixed test prompts, and scores them with CLIP (prompt match + "realistic vs deformed").
-A round's LoRA only replaces `lora/best/` if it beats the best score so far. Every round's winning image is in `rounds/NNN/winner.png` — see [ROUNDS.md](ROUNDS.md).
-
-`app.py` loads `lora/best/` automatically — just `git pull` (or re-download) to get the latest.
+## Training rounds (finished)
+The model was fine-tuned for 25 rounds on a CPU-only cloud VM with a small **LoRA** (reward fine-tuning with CLIP, then PickScore, then a hard-pose focus).
+Each round's winning image is in `rounds/NNN/` — see [ROUNDS.md](ROUNDS.md); blind A/B votes are in `compare/`.
+The best LoRA (round 21) is in `lora/best/` and `app.py` loads it automatically, but blind tests showed no visible difference from the base model,
+so training was stopped in favor of pose control, which fixes hard poses far better.
