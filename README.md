@@ -21,7 +21,8 @@ No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 
 ## Pose control
 Plain text prompts often break bodies in unusual poses. Tick **Use pose control** and pick a source:
-- **Preset pose** — Handstand, Cartwheel, Backflip, Split, Lying on back, Sitting cross-legged, Jumping, Standing.
+- **Preset pose** — 17 presets: Handstand, Cartwheel, Backflip, Split, Lying on back, Sitting cross-legged, Jumping, Standing,
+  Running, Kneeling, Lunge, Yoga warrior, High kick, Sitting on a chair, Waving, Dancing, Back to camera.
 - **Copy pose from my photo** — upload any photo of a person; their pose is detected and reused (first use downloads the detector, ~200MB).
 - **My skeleton image** — upload your own OpenPose stick figure.
 
@@ -32,6 +33,8 @@ Plain text prompts often break bodies in unusual poses. Tick **Use pose control*
 
 ![](samples/pose_modes.png)
 *Text only · handstand preset · pose detected from a photo · same pose as an astronaut · lying-down preset.*
+
+![](samples/pose_presets_2.png)
 
 ## Samples (2 steps, CPU)
 ![](samples/sample_0.png) ![](samples/sample_1.png)
