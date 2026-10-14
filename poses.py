@@ -119,7 +119,7 @@ POSE_HINTS = {
     "Walking": "walking, side view",
     "Push-up": "doing a push-up, side view",
     "Hugging knees": "sitting on the ground hugging their knees, side view",
-    "Lying on stomach": "lying on their stomach propped on elbows, feet up, side view",
+    "Lying on stomach": "lying on their stomach on a blanket reading a book, wearing a t-shirt and jeans, side view",
 }
 
 

@@ -15,14 +15,18 @@ Already installed an older version? Re-run `install.bat` once (pose control need
 No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 
 ## Tips
+- **Style**: Photo, Cinematic, Anime, 3D render, Oil painting, Pencil sketch.
+- **Number of images**: 1–4 per click (seeds count up from the first). Every image is saved in `outputs/`.
 - Steps 1–4 is best; more doesn't help much with Turbo models.
 - Describe the person, pose, clothing and setting: `full body photo of a man jogging on a beach, sunset`.
 - Reuse a seed to tweak a prompt while keeping the same composition.
 
 ## Pose control
 Plain text prompts often break bodies in unusual poses. Tick **Use pose control** and pick a source:
-- **Preset pose** — 17 presets: Handstand, Cartwheel, Backflip, Split, Lying on back, Sitting cross-legged, Jumping, Standing,
-  Running, Kneeling, Lunge, Yoga warrior, High kick, Sitting on a chair, Waving, Dancing, Back to camera.
+- **Preset pose** — 25 presets: Handstand, Cartwheel, Backflip, Split, Lying on back/stomach, Sitting cross-legged, Sitting on a chair,
+  Hugging knees, Jumping, Standing, Running, Walking, Kneeling, Lunge, Squat, Push-up, Yoga warrior, High kick, Waving, Pointing,
+  Dancing, Arms crossed, Hands on hips, Back to camera.
+- **Mirror pose** flips any pose left/right.
 - **Copy pose from my photo** — upload any photo of a person; their pose is detected and reused (first use downloads the detector, ~200MB).
 - **My skeleton image** — upload your own OpenPose stick figure.
 
@@ -35,6 +39,8 @@ Plain text prompts often break bodies in unusual poses. Tick **Use pose control*
 *Text only · handstand preset · pose detected from a photo · same pose as an astronaut · lying-down preset.*
 
 ![](samples/pose_presets_2.png)
+
+![](samples/pose_presets_3.png)
 
 ## Samples (2 steps, CPU)
 ![](samples/sample_0.png) ![](samples/sample_1.png)
