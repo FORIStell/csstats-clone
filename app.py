@@ -32,7 +32,7 @@ STYLES = {
     "Vintage film": "1970s vintage film photo, grain, faded warm colors",
     "Black & white photo": "black and white photograph, high contrast, film grain",
     "Studio portrait": "professional studio photo, softbox lighting, plain backdrop",
-    "Claymation": "claymation, plasticine figures, stop motion look",
+    "Claymation": "claymation character made of plasticine clay, stop-motion animation still, handmade miniature set",
     "Low poly": "low poly 3D art, flat shaded geometric facets",
     "Pop art": "pop art, bright flat colors, Andy Warhol style screen print",
     "Ukiyo-e": "ukiyo-e Japanese woodblock print",

@@ -15,7 +15,11 @@ Already installed an older version? Re-run `install.bat` once (pose control need
 No GPU / errors with GPU? Run `run.bat --cpu` (slower, ~20–60s per image).
 
 ## Tips
-- **Style**: Photo, Cinematic, Anime, 3D render, Oil painting, Pencil sketch.
+- **Style**: 20 styles — Photo, Cinematic, Anime, 3D render, Oil painting, Pencil sketch, Watercolor, Comic book, Pixel art,
+  Cyberpunk, Fantasy art, Vintage film, Black & white photo, Studio portrait, Claymation, Low poly, Pop art, Ukiyo-e,
+  Charcoal drawing, Stained glass.
+
+  ![](samples/styles.png)
 - **Number of images**: 1–4 per click (seeds count up from the first). Every image is saved in `outputs/`.
 - Steps 1–4 is best; more doesn't help much with Turbo models.
 - Describe the person, pose, clothing and setting: `full body photo of a man jogging on a beach, sunset`.
