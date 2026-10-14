@@ -24,6 +24,20 @@ STYLES = {
     "3D render": "3D render, Pixar style, soft studio lighting",
     "Oil painting": "oil painting, visible brush strokes, classical art",
     "Pencil sketch": "pencil sketch, black and white, detailed shading",
+    "Watercolor": "watercolor painting, soft washes, paper texture",
+    "Comic book": "comic book art, bold ink outlines, halftone shading",
+    "Pixel art": "pixel art, 16-bit retro video game style",
+    "Cyberpunk": "cyberpunk, neon lights, rainy night city, futuristic",
+    "Fantasy art": "epic fantasy concept art, magical atmosphere, detailed",
+    "Vintage film": "1970s vintage film photo, grain, faded warm colors",
+    "Black & white photo": "black and white photograph, high contrast, film grain",
+    "Studio portrait": "professional studio photo, softbox lighting, plain backdrop",
+    "Claymation": "claymation, plasticine figures, stop motion look",
+    "Low poly": "low poly 3D art, flat shaded geometric facets",
+    "Pop art": "pop art, bright flat colors, Andy Warhol style screen print",
+    "Ukiyo-e": "ukiyo-e Japanese woodblock print",
+    "Charcoal drawing": "charcoal drawing, rough smudged strokes",
+    "Stained glass": "stained glass window, bold lead lines, glowing colors",
 }
 
 
