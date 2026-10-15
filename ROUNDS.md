@@ -4,6 +4,7 @@ Current best: **round 21** (score 0.2716)
 
 | Round | Score | Kept? | Winner |
 |---|---|---|---|
+| 35 | 0.2708 | no | ![](rounds/035/winner.png) |
 | 34 | 0.2661 | no | ![](rounds/034/winner.png) |
 | 33 | 0.2684 | no | ![](rounds/033/winner.png) |
 | 32 | 0.2703 | no | ![](rounds/032/winner.png) |
