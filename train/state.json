@@ -1,5 +1,5 @@
 {
-  "round": 57,
+  "round": 58,
   "best_score": 0.2716478519141674,
   "best_round": 21,
   "history": [
@@ -291,6 +291,11 @@
     {
       "round": 57,
       "score": 0.26985517889261246,
+      "improved": false
+    },
+    {
+      "round": 58,
+      "score": 0.26813796907663345,
       "improved": false
     }
   ],
